@@ -1,0 +1,9 @@
+name: DarkBridge
+version: '1.0-SNAPSHOT'
+main: me.civworld.darkBridge.DarkBridge
+api-version: '1.20'
+prefix: DarkBridge
+load: STARTUP
+authors: [ uuun ]
+description: Plugin for CivWorld
+website: https://civworld.ru
