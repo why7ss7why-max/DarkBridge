@@ -34,7 +34,10 @@ public class DiscordCommandSender implements CommandSender {
 
     @Override
     public void sendMessage(@NotNull String message) {
-        String clean = message.replaceAll("§[0-9a-fk-or]", "");
+        String clean = message
+                .replaceAll("§x(§[0-9a-fA-F]){6}", "")
+                .replaceAll("§[0-9a-fk-orA-FK-OR]", "");
+
         messages.add(clean);
     }
 
