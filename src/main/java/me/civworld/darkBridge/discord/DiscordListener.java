@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static ru.civworld.darkAPI.DarkAPI.error;
+import static ru.civworld.darkAPI.DarkAPI.log;
+
 public class DiscordListener extends ListenerAdapter {
 
     private final Plugin plugin;
@@ -25,47 +28,45 @@ public class DiscordListener extends ListenerAdapter {
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("cmd")) return;
 
-        plugin.getLogger().info("=== DISCORD COMMAND RECEIVED ===");
+        log("=== DISCORD COMMAND RECEIVED ===");
 
         var member = event.getMember();
         if (member == null) {
-            plugin.getLogger().warning("Member is null!");
+            error("Member is null!");
             event.reply("❌ Произошла ошибка").setEphemeral(true).queue();
             return;
         }
 
-        plugin.getLogger().info("User: " + member.getEffectiveName() + " (" + member.getId() + ")");
+        log("User: " + member.getEffectiveName() + " (" + member.getId() + ")");
 
         if (member.getRoles().stream().noneMatch(r -> r.getId().equals(roleId))) {
-            plugin.getLogger().warning("User doesn't have required role: " + roleId);
+            error("User doesn't have required role: " + roleId);
             event.reply("❌ У вас нет прав для выполнения этой команды").setEphemeral(true).queue();
             return;
         }
 
         var option = event.getOption("command");
         if (option == null) {
-            plugin.getLogger().warning("Command option is null!");
+            error("Command option is null!");
             event.reply("❌ Команда не указана").setEphemeral(true).queue();
             return;
         }
 
         String cmd = option.getAsString();
 
-        // Убираем начальный "/" если он есть
         if (cmd.startsWith("/")) {
             cmd = cmd.substring(1);
         }
 
-        plugin.getLogger().info("Command to execute: '" + cmd + "'");
-        plugin.getLogger().info("Deferring reply immediately...");
+        log("Command to execute: '" + cmd + "'");
+        log("Deferring reply immediately...");
 
         final String finalCmd = cmd;
 
         InteractionHook hook;
         try {
-            // ПУБЛИЧНЫЙ ответ (все видят)
             hook = event.deferReply(false).complete();
-            plugin.getLogger().info("Reply deferred successfully!");
+            log("Reply deferred successfully!");
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to defer reply: " + e.getMessage());
             e.printStackTrace();
@@ -76,7 +77,7 @@ public class DiscordListener extends ListenerAdapter {
 
         Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
             if (!responseSent.getAndSet(true)) {
-                plugin.getLogger().info("Timeout reached, sending timeout message...");
+                log("Timeout reached, sending timeout message...");
 
                 EmbedBuilder timeoutEmbed = new EmbedBuilder()
                         .setTitle("⏱️ Команда отправлена")
@@ -87,26 +88,26 @@ public class DiscordListener extends ListenerAdapter {
 
                 try {
                     hook.sendMessageEmbeds(timeoutEmbed.build()).complete();
-                    plugin.getLogger().info("Timeout message sent successfully");
+                    log("Timeout message sent successfully");
                 } catch (Exception e) {
-                    plugin.getLogger().warning("Failed to send timeout message: " + e.getMessage());
+                    error("Failed to send timeout message: " + e.getMessage());
                 }
             }
         }, 50L);
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             try {
-                plugin.getLogger().info("Executing command in main thread...");
+                log("Executing command in main thread...");
 
                 DiscordCommandSender sender = new DiscordCommandSender(plugin);
                 boolean success = Bukkit.dispatchCommand(sender, finalCmd);
                 String result = sender.getResult();
 
-                plugin.getLogger().info("Command executed. Success: " + success);
-                plugin.getLogger().info("Result length: " + result.length() + " chars");
+                log("Command executed. Success: " + success);
+                log("Result length: " + result.length() + " chars");
 
                 if (!responseSent.getAndSet(true)) {
-                    plugin.getLogger().info("Sending result to Discord...");
+                    log("Sending result to Discord...");
 
                     if (result.length() > 3900) {
                         result = result.substring(0, 3900) + "\n... (обрезано)";
@@ -121,17 +122,16 @@ public class DiscordListener extends ListenerAdapter {
 
                     try {
                         hook.sendMessageEmbeds(embed.build()).complete();
-                        plugin.getLogger().info("Result sent successfully");
+                        log("Result sent successfully");
                     } catch (Exception e) {
-                        plugin.getLogger().warning("Failed to send result: " + e.getMessage());
+                        error("Failed to send result: " + e.getMessage());
                     }
                 } else {
-                    plugin.getLogger().info("Command completed after timeout. Result: " + result);
+                    log("Command completed after timeout. Result: " + result);
                 }
 
             } catch (IllegalArgumentException e) {
-                // Ошибка "Cannot make ... a vanilla command listener"
-                plugin.getLogger().warning("Vanilla command compatibility issue: " + e.getMessage());
+                error("Vanilla command compatibility issue: " + e.getMessage());
 
                 if (!responseSent.getAndSet(true)) {
                     EmbedBuilder errorEmbed = new EmbedBuilder()
@@ -168,6 +168,6 @@ public class DiscordListener extends ListenerAdapter {
             }
         });
 
-        plugin.getLogger().info("=== DISCORD COMMAND PROCESSING STARTED ===");
+        log("=== DISCORD COMMAND PROCESSING STARTED ===");
     }
 }

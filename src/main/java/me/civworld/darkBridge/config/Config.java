@@ -3,7 +3,6 @@ package me.civworld.darkBridge.config;
 import org.bukkit.plugin.Plugin;
 
 public class Config {
-
     private final Plugin plugin;
 
     public Config(Plugin plugin){

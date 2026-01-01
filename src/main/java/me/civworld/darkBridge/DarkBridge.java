@@ -4,40 +4,44 @@ import me.civworld.darkBridge.config.Config;
 import me.civworld.darkBridge.discord.DiscordManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import static ru.civworld.darkAPI.DarkAPI.*;
+
 public final class DarkBridge extends JavaPlugin {
     private DiscordManager discordManager;
 
     @Override
     public void onEnable() {
-        getLogger().info("Enabling plugin...");
+        registerPlugin(this, "<gray>[<red>DarkBridge<gray>] <white>");
+
+        log("Enabling plugin...");
 
         Config config = new Config(this);
-        getLogger().info("Loading config...");
+        log("Loading config...");
 
         String roleId = config.getRoleId();
         String token = config.getToken();
 
         if (token.isEmpty()) {
-            getLogger().severe("Token is empty! Please configure the plugin.");
+            error("Token is empty! Please configure the plugin.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
-        getLogger().info("Creating DiscordManager");
+        log("Creating DiscordManager");
         discordManager = new DiscordManager(this, token, roleId);
 
-        getLogger().info("Initializing DiscordManager (async)");
+        log("Initializing DiscordManager (async)");
         discordManager.initialize();
 
-        getLogger().info("Plugin successfully enabled!");
+        log("Plugin successfully enabled!");
     }
 
     @Override
     public void onDisable() {
         if (discordManager != null) {
-            getLogger().info("Shutting down Discord connection...");
+            log("Shutting down Discord connection...");
             discordManager.shutdown();
         }
-        getLogger().info("Plugin successfully disabled!");
+        log("Plugin successfully disabled!");
     }
 }

@@ -2,10 +2,14 @@ package me.civworld.darkBridge.discord;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.bukkit.plugin.Plugin;
+
+import static ru.civworld.darkAPI.DarkAPI.error;
+import static ru.civworld.darkAPI.DarkAPI.log;
 
 public class DiscordManager {
     private final Plugin plugin;
@@ -22,21 +26,22 @@ public class DiscordManager {
     public void initialize(){
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                plugin.getLogger().info("Starting JDA initialization...");
+                log("Starting JDA initialization...");
 
                 this.jda = JDABuilder.createDefault(token)
                         .enableIntents(
                                 GatewayIntent.GUILD_MESSAGES,
                                 GatewayIntent.MESSAGE_CONTENT
                         )
+                        .setActivity(Activity.listening("/cmd"))
                         .addEventListeners(new DiscordListener(plugin, roleId))
                         .build();
 
-                plugin.getLogger().info("Waiting for JDA to be ready...");
+                log("Waiting for JDA to be ready...");
                 jda.awaitReady();
 
-                plugin.getLogger().info("JDA is ready! Bot is: " + jda.getSelfUser().getAsTag());
-                plugin.getLogger().info("Registering slash commands...");
+                log("JDA is ready! Bot is: " + jda.getSelfUser().getAsTag());
+                log("Registering slash commands...");
 
                 jda.updateCommands()
                         .addCommands(
@@ -49,20 +54,18 @@ public class DiscordManager {
                                         )
                         ).queue(
                                 success -> {
-                                    plugin.getLogger().info("✓ Slash command registered successfully!");
-                                    plugin.getLogger().info("Command may take up to 1 hour to appear globally.");
-                                    plugin.getLogger().info("For instant testing, add the command to your server directly.");
+                                    log("✓ Slash command registered successfully!");
                                 },
-                                error -> plugin.getLogger().severe("✗ Failed to register command: " + error.getMessage())
+                                error -> error("✗ Failed to register command: " + error.getMessage())
                         );
 
-                plugin.getLogger().info("Discord bot is fully operational!");
+                log("Discord bot is fully operational!");
 
             } catch (InterruptedException e) {
-                plugin.getLogger().severe("JDA initialization was interrupted!");
+                error("JDA initialization was interrupted!");
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
-                plugin.getLogger().severe("Failed to initialize JDA: " + e.getMessage());
+                error("Failed to initialize JDA: " + e.getMessage());
                 e.printStackTrace();
             }
         });
@@ -71,12 +74,12 @@ public class DiscordManager {
     public void shutdown() {
         if (jda != null) {
             try {
-                plugin.getLogger().info("Shutting down JDA...");
+                log("Shutting down JDA...");
                 jda.getRegisteredListeners().forEach(jda::removeEventListener);
                 jda.shutdownNow();
-                plugin.getLogger().info("JDA shutdown initiated");
+                log("JDA shutdown initiated");
             } catch (Exception e) {
-                plugin.getLogger().info("JDA shutdown completed with minor warnings (normal for hot reload)");
+                log("JDA shutdown completed with minor warnings (normal for hot reload)");
             }
         }
     }

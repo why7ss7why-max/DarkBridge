@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public class DiscordCommandSender implements CommandSender {
-
     private final List<String> messages = new ArrayList<>();
     private final Plugin plugin;
     private final ConsoleCommandSender console;
@@ -58,10 +57,9 @@ public class DiscordCommandSender implements CommandSender {
         sendMessage(messages);
     }
 
-    // Делегируем методы Permission к консоли
     @Override
     public boolean hasPermission(@NotNull String name) {
-        return true; // Discord команды выполняются с правами OP
+        return true;
     }
 
     @Override
@@ -116,12 +114,12 @@ public class DiscordCommandSender implements CommandSender {
 
     @Override
     public boolean isOp() {
-        return true; // Discord команды выполняются как OP
+        return true;
     }
 
     @Override
     public void setOp(boolean value) {
-        // Игнорируем
+
     }
 
     @Override
